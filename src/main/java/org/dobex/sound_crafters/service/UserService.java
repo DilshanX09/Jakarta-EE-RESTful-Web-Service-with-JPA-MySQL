@@ -9,6 +9,8 @@ import org.dobex.sound_crafters.dto.UserDTO;
 import org.dobex.sound_crafters.dto.UserResponseDTO;
 import org.dobex.sound_crafters.entity.Status;
 import org.dobex.sound_crafters.entity.User;
+import org.dobex.sound_crafters.mail.VerificationMail;
+import org.dobex.sound_crafters.provider.MailServiceProvider;
 import org.dobex.sound_crafters.util.AppUtil;
 import org.dobex.sound_crafters.util.HibernateUtil;
 import org.hibernate.HibernateException;
@@ -41,8 +43,28 @@ public class UserService {
                             .setParameter("value", Status.Type.VERIFIED.name())
                             .getSingleResult();
                     if (!user.getStatus().equals(verifiedStatus)) {
-                        responseMessage = "Your account is not verified. Please verify first!";
+
+                        String verificationCode = AppUtil.generateCode();
+                        VerificationMail mail = new VerificationMail(user.getEmail(), verificationCode,
+                                user.getFirstName() + " " + user.getLastName());
+                        MailServiceProvider.getInstance().sendMail(mail);
+
+                        Transaction transaction = session.beginTransaction();
+
+                        responseMessage = "Your account is not verified. Please check your email for verification code!";
                         response.addProperty("isVerified", false);
+
+                        try {
+                            user.setVerificationCode(verificationCode);
+                            session.merge(user);
+                            transaction.commit();
+                        } catch (HibernateException e) {
+                            transaction.rollback();
+                            responseMessage = "Failed to send verification code! Please try again.";
+                        } finally {
+                            session.close();
+                        }
+
                     } else {
 
                         if (userDTO.isStaySignedIn()) {
@@ -113,6 +135,13 @@ public class UserService {
                 try {
                     session.persist(user);
                     transaction.commit();
+
+                    VerificationMail mail = new VerificationMail(
+                            user.getEmail(),
+                            verificationCode,
+                            user.getFirstName() + " " + user.getLastName());
+                    MailServiceProvider.getInstance().sendMail(mail);
+
                     status = true;
                     responseMessage = "Account created successfully! Verification has been sent to your email!";
                 } catch (HibernateException e) {
