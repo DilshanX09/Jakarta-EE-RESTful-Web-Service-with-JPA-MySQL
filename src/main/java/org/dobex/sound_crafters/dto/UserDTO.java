@@ -27,6 +27,9 @@ public class UserDTO {
         this.status = status;
     }
 
+    public UserDTO() {
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
