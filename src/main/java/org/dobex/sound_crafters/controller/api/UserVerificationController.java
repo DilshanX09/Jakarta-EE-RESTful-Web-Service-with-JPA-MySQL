@@ -20,7 +20,6 @@ public class UserVerificationController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response verifyAccount(String requestBody) {
-        System.out.println("Received verification request: " + requestBody);
         UserDTO userDTO = GSON.fromJson(requestBody, UserDTO.class);
         String response = new UserService().verifyUserAccount(userDTO);
         return Response.ok().entity(response).build();
