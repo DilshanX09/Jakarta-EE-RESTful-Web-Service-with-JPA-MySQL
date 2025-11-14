@@ -6,6 +6,7 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
 import org.dobex.sound_crafters.configuration.ApplicationConfiguration;
+import org.dobex.sound_crafters.listener.ContextPathListener;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 public class Main {
@@ -28,8 +29,10 @@ public class Main {
 
         FilterMap corsFilterMap = new FilterMap();
         corsFilterMap.setFilterName("CorsFilter");
-        corsFilterMap.addURLPattern("/*");
+        corsFilterMap.addURLPattern("/api/v1/*");
         context.addFilterMap(corsFilterMap);
+
+        context.addApplicationListener(ContextPathListener.class.getName());
 
         try {
             tomcat.start();
