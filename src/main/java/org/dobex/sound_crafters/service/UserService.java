@@ -160,7 +160,6 @@ public class UserService {
         userResponseDTO.setFirstName(user.getFirstName());
         userResponseDTO.setLastName(user.getLastName());
         userResponseDTO.setEmail(user.getEmail());
-        userResponseDTO.setCurrentPassword(user.getPassword());
         userResponseDTO.setLogged(true);
         userResponseDTO.setCreatedAt(user.getCreatedAt());
         userResponseDTO.setUpdatedAt(user.getUpdatedAt());

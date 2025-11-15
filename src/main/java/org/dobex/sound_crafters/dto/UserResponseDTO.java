@@ -19,7 +19,6 @@ public class UserResponseDTO implements Serializable {
     private Integer provinceId;
     private Integer cityId;
     private String postalCode;
-    private String currentPassword;
     private boolean isLogged = false;
 
     public String getMobile() {
@@ -60,14 +59,6 @@ public class UserResponseDTO implements Serializable {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
-    }
-
-    public String getCurrentPassword() {
-        return currentPassword;
-    }
-
-    public void setCurrentPassword(String currentPassword) {
-        this.currentPassword = currentPassword;
     }
 
     public boolean isLogged() {
