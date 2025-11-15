@@ -3,6 +3,7 @@ package org.dobex.sound_crafters.entity;
 import jakarta.persistence.*;
 
 @Entity
+@NamedQuery(name = "City.getAllCities", query = "FROM City u")
 public class City {
 
     @Id

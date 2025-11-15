@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.Context;
 import org.dobex.sound_crafters.dto.UserDTO;
 import org.dobex.sound_crafters.dto.UserResponseDTO;
+import org.dobex.sound_crafters.entity.Address;
 import org.dobex.sound_crafters.entity.Status;
 import org.dobex.sound_crafters.entity.User;
 import org.dobex.sound_crafters.mail.VerificationMail;
@@ -16,6 +17,8 @@ import org.dobex.sound_crafters.util.HibernateUtil;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+
+import java.util.List;
 
 public class UserService {
 
@@ -34,14 +37,11 @@ public class UserService {
             Session session = HibernateUtil.getSessionFactory().openSession();
 
             User user = session.createNamedQuery("User.findByEmail", User.class).setParameter("email", userDTO.getEmail()).getSingleResultOrNull();
-            if (user == null)
-                responseMessage = "This email account not found! Please register first!";
+
+            if (user == null) responseMessage = "This email account not found! Please register first!";
             else {
 
-                Status verifiedStatus = session
-                        .createNamedQuery("Status.findByValue", Status.class)
-                        .setParameter("value", Status.Type.VERIFIED.name())
-                        .getSingleResult();
+                Status verifiedStatus = session.createNamedQuery("Status.findByValue", Status.class).setParameter("value", Status.Type.VERIFIED.name()).getSingleResult();
 
                 if (user.getStatus().equals(verifiedStatus)) {
                     status = true;
@@ -126,9 +126,11 @@ public class UserService {
                             httpResponse.addCookie(passwordCookie);
                         }
 
-                        UserResponseDTO responseUserDTO = new UserResponseDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getCreatedAt(), user.getUpdatedAt(), user.getStatus());
+                        List<Address> addressList = session.createQuery("FROM Address a WHERE a.user = :user", Address.class).setParameter("user", user).getResultList();
 
-                        response.addProperty("user", GSON.toJson(responseUserDTO));
+                        UserResponseDTO userResponseDTO = getUserResponseDTO(addressList, user);
+
+                        response.addProperty("user", GSON.toJson(userResponseDTO));
                         status = true;
                         responseMessage = "You are successfully logged in!";
                     }
@@ -140,6 +142,37 @@ public class UserService {
         response.addProperty("status", status);
         response.addProperty("message", responseMessage);
         return GSON.toJson(response);
+    }
+
+    private static UserResponseDTO getUserResponseDTO(List<Address> addressList, User user) {
+
+        Address primaryAddress = null;
+
+        for (Address address : addressList) {
+            if (address.isPrimary()) {
+                primaryAddress = address;
+                break;
+            }
+        }
+
+        UserResponseDTO userResponseDTO = new UserResponseDTO();
+        userResponseDTO.setId(user.getId());
+        userResponseDTO.setFirstName(user.getFirstName());
+        userResponseDTO.setLastName(user.getLastName());
+        userResponseDTO.setEmail(user.getEmail());
+        userResponseDTO.setCurrentPassword(user.getPassword());
+        userResponseDTO.setLogged(true);
+        userResponseDTO.setCreatedAt(user.getCreatedAt());
+        userResponseDTO.setUpdatedAt(user.getUpdatedAt());
+
+        if (primaryAddress != null) {
+            userResponseDTO.setAddressLineOne(primaryAddress.getLineOne());
+            userResponseDTO.setProvinceId(primaryAddress.getProvince().getId());
+            userResponseDTO.setCityId(primaryAddress.getCity().getId());
+            userResponseDTO.setMobile(primaryAddress.getMobile());
+            userResponseDTO.setPostalCode(primaryAddress.getPostalCode());
+        }
+        return userResponseDTO;
     }
 
     public String registerUser(UserDTO userDTO) {

@@ -2,6 +2,9 @@ package org.dobex.sound_crafters.entity;
 
 import jakarta.persistence.*;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 @Entity
 @NamedQuery(name="User.findByEmail", query = "FROM User u WHERE u.email = :email")
 public class User extends BaseEntity {
@@ -27,6 +30,17 @@ public class User extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;
+
+    @OneToMany(mappedBy = "user")
+    private Set<Address> addresses = new LinkedHashSet<>();
+
+    public Set<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(Set<Address> addresses) {
+        this.addresses = addresses;
+    }
 
     public long getId() {
         return id;
